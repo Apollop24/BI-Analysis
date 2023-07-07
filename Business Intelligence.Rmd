@@ -1,0 +1,136 @@
+---
+title: "Business Inteligence"
+author: "KIBET P"
+date: "2023-07-07"
+output: html_document
+theme: simple
+css: styles.css
+---
+
+# Loading The Data Into R
+
+### **Define the file path containing the Excel data**
+
+```{r}
+library(readxl)
+my_file_path <- "C:/Users/TOO/Downloads/BI_Analyst_Assessment_Data_2023.xlsx"
+```
+
+### **Read all sheets from the excel file**
+
+```{r}
+E_sheets <- excel_sheets(my_file_path)
+```
+
+### **Iterate through each sheet and read the data into a list**
+
+```{r}
+Business_Inteligence_Dataset <- list()  
+# List to store data from each sheet
+for (sheet_name in E_sheets) {
+  # Read the sheet data
+  sheet_data <- read_excel(my_file_path, sheet = sheet_name)
+  Business_Inteligence_Dataset[[sheet_name]] <- sheet_data
+}
+```
+
+### **Access Data from specific sheets**
+
+```{r}
+Data_from_sheet1 <- Business_Inteligence_Dataset[["Visit Tbl"]]  # Replace "Visit Tbl" with the actual sheet name
+Data_from_sheet2 <- Business_Inteligence_Dataset[["Invoice Tbl"]]
+Data_from_sheet3 <- Business_Inteligence_Dataset[["Diagnosis Tbl"]]
+Data_from_sheet4 <- Business_Inteligence_Dataset[["Data Dictionary"]]
+```
+
+# Output
+
+### Print the data from a specific sheet
+
+```{r}
+cat("Head of", sheet_name, ":\n")
+print(head(sheet_data))
+cat("\n")
+```
+
+### Count of visits per medical Center
+
+```{r}
+# Load the required packages
+library(knitr)
+library(dplyr)
+
+# Calculate count of visits per medical center
+Visit_Count <- table(Data_from_sheet1$MedicalCenter)
+
+# Convert the table to a data frame
+Visit_Count_df <- as.data.frame(Visit_Count)
+
+# Rename the columns
+colnames(Visit_Count_df) <- c("Medical Center", "Visit Count")
+
+# Add a row for the total count
+total_count <- sum(Visit_Count_df$`Visit Count`)
+total_row <- c("Total", total_count)
+Visit_Count_df <- rbind(Visit_Count_df, total_row)
+
+# Arrange the rows in descending order of visit count
+Visit_Count_df <- Visit_Count_df %>%
+  arrange(desc(`Visit Count`))
+
+# Print the table using kable
+kable(Visit_Count_df, format = "html", caption = "Count of Visits per Medical Center")
+
+```
+
+### Count of medical visit per month
+
+```{r}
+# Load the required packages
+library(knitr)
+library(dplyr)
+library(tidyr)
+library(kableExtra)
+
+# Convert VisitDateTime column to date format
+Data_from_sheet1$VisitDateTime <- as.Date(Data_from_sheet1$VisitDateTime)
+
+# Extract month from VisitDateTime
+Data_from_sheet1$Month <- format(Data_from_sheet1$VisitDateTime, "%b")
+Data_from_sheet1$Month <- factor(Data_from_sheet1$Month, levels = month.abb)
+
+# Calculate count of visits per medical center and month
+Visit_Count <- Data_from_sheet1 %>%
+  group_by(MedicalCenter, Month) %>%
+  summarise(VisitCount = n()) %>%
+  pivot_wider(names_from = Month, values_from = VisitCount, values_fill = 0)
+
+# Add a total column
+Visit_Count$Total <- rowSums(Visit_Count[, -1])
+
+# Reorder the rows based on the highest count in the "Total" column
+Visit_Count <- Visit_Count %>%
+  arrange(desc(Total))
+
+# Reorder the columns to have "Total" at the end
+Visit_Count <- Visit_Count[, c(1, ncol(Visit_Count), 2:(ncol(Visit_Count)-1))]
+
+# Create the table with kable and add styling using kableExtra
+styled_table <- Visit_Count %>%
+  kable(format = "html") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+
+# Print the table
+styled_table
+
+
+
+
+```
+
+### Filter Data By Moth(s) and Medical Center
+
+```{r}
+
+
+```
